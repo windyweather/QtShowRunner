@@ -48,8 +48,23 @@ private slots:
 
     void on_actionHelp_triggered();
 
+    void on_actionOpen_triggered();
+
+    void on_actionSave_triggered();
+
 private:
     Ui::MainWindow *ui;
+
+    QSettings*  m_pSettings;        // pointer to a settings file
+
+
+    // save and restore settings and shows
+    void    createDefaults();
+    void    saveDefaults();         // save default settings
+    void    restoreDefaults();      // restore defaults
+    void    saveShow();             // save a show file
+    void    restoreShow();          // restore a show file
+
 
     void clickingToEndShow();       // start waiting on end of show
     void clickToEnd();              // Just click mouse eventually ending show
