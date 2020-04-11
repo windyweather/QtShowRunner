@@ -91,6 +91,7 @@
 #include <QWindow>
 #include <QScreen>
 #include <QDir>
+#include <QDebug>
 
 // support mouse click
 #include <mouseclick.h>
@@ -116,9 +117,18 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         setStatus(tr("Mouse Not Opened"));
     }
+
+#ifdef Q_OS_LINUX
     ui->le_ImpressPath->setText(tr("libreoffice"));
     ui->le_ShowOption->setText(tr("--impress --show"));
     ui->le_ShowPath->setText(tr("/home/darrell/ImpressTests"));
+#endif // Q_OS_LINUX
+#ifdef Q_OS_WIN
+    ui->le_ImpressPath->setText(tr("C:/Program Files/LibreOffice/program/soffice.exe"));
+    ui->le_ShowOption->setText(tr("--impress --show"));
+    ui->le_ShowPath->setText(tr("C:/Pictures/ImpressSlideShows"));
+#endif
+
 }
 
 MainWindow::~MainWindow()

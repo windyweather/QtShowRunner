@@ -6,7 +6,7 @@
 
 QT       += core gui
 win32: LIBS += -lUser32
-QT += x11extras
+#QT += x11extras
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 # not needed since X11 does not work
