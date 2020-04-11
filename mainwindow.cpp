@@ -285,16 +285,25 @@ void    MainWindow::saveShow()
     QDir d = QFileInfo(ui->le_ShowPath->text()).absoluteDir();
     QString absolute=d.absolutePath();
 
-    QString sShowFile = QFileDialog::getSaveFileName(this,
+    QFileDialog saveFileDlg;
+    saveFileDlg.setDefaultSuffix("show");
+    QString sShowFile = saveFileDlg.getSaveFileName(this,
                     tr("Save Show File"),
                     absolute,
-                    tr("ShowFile (*.show);"));
+                    tr("ShowFile(*.show);;All Files(*.*)"));
+
     if ( 0 == sShowFile.count() )
     {
         // file dialog cancelled
         return;
     }
 
+    // tidy up the filename by adding the suffix. Seems to be there on Windows but now Linux
+    // but do it anyway for everyone.
+    if ( !sShowFile.contains(tr(".show"),Qt::CaseInsensitive) )
+    {
+        sShowFile += tr(".show"); // add the missing suffix
+    }
 
     // make our own private file, but using the INI format and settings
     // class to make this easy.
@@ -342,7 +351,7 @@ void    MainWindow::restoreShow()
     QString sShowFile = QFileDialog::getOpenFileName(this,
                     tr("Open Show File"),
                     absolute,
-                    tr("ShowFile (*.show);"));
+                    tr("ShowFiles(*.show);;All Files(*.*)"));
     if ( 0 == sShowFile.count() )
     {
         // user just cancelled out of the open dialog
@@ -398,18 +407,18 @@ void MainWindow::on_pb_BrowseShowPath_clicked()
 {
     if ( showsBusy )
     {
-        setStatus(tr("Stop Shows First"));
+        setStatus(tr("Stop shows first"));
         return;
     }
-    setStatus(tr("Browse for Impress Slide Show"));
+    setStatus(tr("Find an Impress slide show"));
     QString showfile = QFileDialog::getOpenFileName(this, tr("Impress Slide Show"),
                                                      ui->le_ShowPath->text(),
-                                                     tr("Impress (*.odp)"));
+                                                     tr("Impress (*.odp);;All Files(*.*)"));
 
     if ( showfile.count() != 0 ) // if cancel, then empty string
     {
         ui->le_ShowPath->setText(showfile);
-        setStatus(tr("Impress Slide Show Path set"));
+        setStatus(tr("Impress slide show file set"));
     }
     else
     {
@@ -421,17 +430,17 @@ void MainWindow::on_pb_AddShow_clicked()
 {
     if ( showsBusy )
     {
-        setStatus(tr("Stop Shows First"));
+        setStatus(tr("Stop shows first"));
         return;
     }
     if ( ui->le_ShowPath->text().count() != 0 ) // if path set
     {
         ui->lw_ShowList->addItem(ui->le_ShowPath->text());
-        setStatus(tr("Impress Slide Show Path added"));
+        setStatus(tr("Impress slide show added"));
     }
     else
     {
-        setStatus(tr("Use (...) to Find a Slide Show"));
+        setStatus(tr("Use (...) to find a slide show"));
     }
 }
 
@@ -439,7 +448,7 @@ void MainWindow::on_pb_RemoveShow_clicked()
 {
     if ( showsBusy )
     {
-        setStatus(tr("Stop Shows First"));
+        setStatus(tr("Stop shows first"));
         return;
     }
     int selectedRow = ui->lw_ShowList->currentRow();
@@ -447,11 +456,11 @@ void MainWindow::on_pb_RemoveShow_clicked()
     {
         QListWidgetItem* removedRow = ui->lw_ShowList->takeItem(selectedRow);
         delete removedRow;
-        setStatus(tr("Show Removed From List"));
+        setStatus(tr("Show removed from list"));
     }
     else
     {
-        setStatus(tr("Select a Show in the List First"));
+        setStatus(tr("Select a show in the list Ffirst"));
     }
 
 }
@@ -460,19 +469,19 @@ void MainWindow::on_pb_StartShows_clicked()
 {
     if (showsBusy)
     {
-        setStatus(tr("Shows are running. Stop first."));
+        setStatus(tr("Stop Shows First"));
         return;
     }
     if ( ui->lw_ShowList->count() == 0) // any shows in list
     {
-        setStatus(tr("Add some shows to list first."));
+        setStatus(tr("Add some shows to list first"));
         return;
     }
 
     showStopper = false;
     showsBusy = true;
     showIndex = 0;  // start with first show
-    setStatus(tr("Starting First Show"));
+    setStatus(tr("Starting first show"));
     startNextShow(); // starting first as next
 }
 
@@ -483,7 +492,7 @@ void MainWindow::on_pb_StopShow_clicked()
         setStatus(tr("Shows not running"));
         return;
     }
-    setStatus(tr("Stopping Shows"));
+    setStatus(tr("Stopping shows"));
     showStopper = true;
     if ( theShow.state() == QProcess::Running )
     {
@@ -508,7 +517,7 @@ void MainWindow::on_pb_BrowseImpressPath_clicked()
     if ( impressexe.count() != 0 ) // if cancel, then empty string
     {
         ui->le_ImpressPath->setText(impressexe);
-        setStatus(tr("Impress Program Path set"));
+        setStatus(tr("Impress program path set"));
     }
     else
     {
@@ -520,7 +529,7 @@ void MainWindow::on_pb_RemoveAllShows_clicked()
 {
     if ( showsBusy )
     {
-        setStatus(tr("Stop Shows First"));
+        setStatus(tr("Stop shows first"));
         return;
     }
     ui->lw_ShowList->clear();
@@ -544,7 +553,7 @@ void MainWindow::on_actionHelp_triggered()
 //
 void MainWindow::clickingToEndShow()
 {
-    setStatus(tr("Waiting for Show to End"));
+    setStatus(tr("Waiting for show to end"));
     endOfShowSeen = false;
     stopClicking = false; // don't stop clicking now
 
@@ -560,7 +569,7 @@ void MainWindow::clickToEnd()
 {
     if ( stopClicking || showStopper )
     {
-        setStatus(tr("Mouse Clicks Stopped"));
+        setStatus(tr("Mouse clicks stopped"));
         return;
     }
 
@@ -574,7 +583,7 @@ void MainWindow::clickToEnd()
             QApplication::beep();
         }
 
-        setStatus(tr("Show End"));
+        setStatus(tr("Show end"));
         endOfShowSeen = true;
         endOfShow();    // start next show
         return;
@@ -624,7 +633,7 @@ void MainWindow::endOfShow()
     // any more shows left? If Not, then just loop back and play again
     if ( showIndex >= ui->lw_ShowList->count() )
     {
-        setStatus(tr("End of Show List. Looping."));
+        setStatus(tr("End of show list. Looping."));
         showIndex = 0;
     }
     // Wait a few seconds and then start next show
@@ -669,7 +678,7 @@ void MainWindow::startNextShow()
     theShow.waitForStarted(10*1000);
     if ( theShow.state() != QProcess::Running )
     {
-        setStatus(tr("Show Didn't Start %1").arg(showName));
+        setStatus(tr("Show didn't start %1").arg(showName));
         showsBusy = false;
         return;
     }
