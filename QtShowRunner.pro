@@ -5,8 +5,8 @@
 #-------------------------------------------------
 
 QT       += core gui
-win32: LIBS += -lUser32
-QT += x11extras
+Q_OS_WINDOWS: LIBS += -lUser32
+Q_OS_LINUX: QT += x11extras
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 # not needed since X11 does not work
