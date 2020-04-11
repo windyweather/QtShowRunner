@@ -129,13 +129,253 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->le_ShowPath->setText(tr("C:/Pictures/ImpressSlideShows"));
 #endif
 
+    restoreDefaults();
 }
 
 MainWindow::~MainWindow()
 {
+    saveDefaults();
     mouseclose();
     delete ui;
 }
+
+//
+// Settings files are .ini file format and are stored per user
+// We store the site list, including the last state of the site and the last date/time checked.
+//
+#define SETTINGS_VERSION "100"
+#define SETTINGS_VERSION_LAST "100"
+void MainWindow::createDefaults()
+{
+    // QSettings ( Format format, Scope scope, const QString & organization, const QString & application = QString(), QObject * parent = 0 )
+    m_pSettings = new QSettings( QSettings::IniFormat, QSettings::UserScope,
+                                  QString("WindyWeather"), QString("QtShowRunner") );
+
+    QString     sFile = m_pSettings->fileName();
+    qDebug()<<"Defaults filepath "<<sFile;
+
+}
+
+//
+// save Scan Interval in minutes and the site list with a count
+//
+void    MainWindow::saveDefaults()
+{
+    createDefaults();
+
+    qDebug()<<"MainWindow::saveDefaults saveDefaults";
+    m_pSettings->beginGroup("WindowSettings");
+    m_pSettings->setValue("size", this->size());
+    m_pSettings->setValue("pos", this->pos());
+    m_pSettings->endGroup();
+
+    m_pSettings->beginGroup("Global");
+    m_pSettings->setValue("version", SETTINGS_VERSION );
+    m_pSettings->endGroup();
+
+    m_pSettings->beginGroup("Defaults");
+    m_pSettings->setValue("version", SETTINGS_VERSION );
+
+    m_pSettings->setValue( "impress_path", ui->le_ImpressPath->text());
+    m_pSettings->setValue( "show_option", ui->le_ShowOption->text());
+    m_pSettings->setValue( "show_path", ui->le_ShowPath->text());
+    qDebug()<<"saveDefaults ShowPath saved as "<<ui->le_ShowPath->text();
+
+    m_pSettings->endGroup();
+    delete m_pSettings;
+    m_pSettings = NULL;
+
+}
+
+//
+// restore everything we saved
+//
+void    MainWindow::restoreDefaults()
+{
+    createDefaults();
+
+#if 0 // let's wait a bit on this
+    // Get the size and position of the window as it is first created
+    // as the default.
+    QSize   defSize = this->size();
+    QPoint  defPos = this->pos();
+
+    m_pSettings->beginGroup("WindowSettings");
+    this->resize(m_pSettings->value("size", defSize ).toSize());
+    this->move(m_pSettings->value("pos", defPos ).toPoint());
+    m_pSettings->endGroup();
+    qDebug("MainWindow::restoreDefaults - Window restored");
+#endif //wait a bit
+
+    m_pSettings->beginGroup("Global");
+    QString versionParams = m_pSettings->value("version", QString("") ).toString();
+    m_pSettings->endGroup();
+    if (versionParams.count() == 0 )
+    {
+        // not an error, just don't foul up the program defaults the first time
+        qDebug()<<"MainWindow::restoreDefaults - no default settings";
+        delete m_pSettings;
+        m_pSettings = NULL;
+        return;
+    }
+    m_pSettings->beginGroup("Defaults");
+
+    QString versionSites = m_pSettings->value("version", QString(SETTINGS_VERSION) ).toString();
+
+    setStatus(QString("Restoring Defaults"));
+    qDebug() << "MainWindow::restoreDefaults - Restoring Defaults";
+
+    ui->le_ImpressPath->setText( m_pSettings->value( "impress_path", "" ).toString() );
+    ui->le_ShowOption->setText( m_pSettings->value( "show_option", "" ).toString() );
+    ui->le_ShowPath->setText( m_pSettings->value( "show_path", "" ).toString() );
+    qDebug()<<"MainWindow::restoreDefaults found show_path as "<<m_pSettings->value( "show_path", "" ).toString();
+
+
+    m_pSettings->endGroup();
+    delete m_pSettings;
+    m_pSettings = NULL;
+
+    setStatus(QString("Restored Defaults"));
+    qDebug()<<"MainWindow::restoreDefaults - Restored Defaults";
+
+}
+
+
+void MainWindow::on_actionOpen_triggered()
+{
+    if ( showsBusy )
+    {
+        setStatus(tr("Stop Shows First"));
+        return;
+    }
+    restoreShow();
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    if ( showsBusy )
+    {
+        setStatus(tr("Stop Shows First"));
+        return;
+    }
+    saveShow();
+}
+
+//
+// Save the list of shows as an ini file with the count and
+// list of shows.
+//
+void    MainWindow::saveShow()
+{
+
+    if ( ui->lw_ShowList->count() == 0)
+    {
+        setStatus(tr("No shows to save"));
+        return;
+    }
+    // Get file name to save the show list
+    // default dir is where the shows are
+
+    QDir d = QFileInfo(ui->le_ShowPath->text()).absoluteDir();
+    QString absolute=d.absolutePath();
+
+    QString sShowFile = QFileDialog::getSaveFileName(this,
+                    tr("Save Show File"),
+                    absolute,
+                    tr("ShowFile (*.show);"));
+    if ( 0 == sShowFile.count() )
+    {
+        // file dialog cancelled
+        return;
+    }
+
+
+    QSettings* pShowFile = new QSettings( sShowFile, QSettings::IniFormat);
+
+    qDebug() <<"MainWindow::saveShow "<<sShowFile;
+
+    pShowFile->beginGroup("Global");
+    pShowFile->setValue("version", SETTINGS_VERSION );
+    pShowFile->endGroup();
+
+    pShowFile->beginGroup("Show");
+    pShowFile->setValue("version", SETTINGS_VERSION );
+
+    int shows = ui->lw_ShowList->count();
+    pShowFile->setValue( "show_count", shows);
+    for (int i=0; i<shows; i++)
+    {
+        QString showpath;
+        QString key = QString("show_%1").arg(i);
+        showpath = ui->lw_ShowList->item(i)->text();
+        pShowFile->setValue( key, showpath );
+    }
+
+
+    pShowFile->endGroup();
+    delete pShowFile;
+    pShowFile = NULL;
+    setStatus(tr("Show Saved"));
+    qDebug("MainWindow::saveShow - Show saved");
+
+}
+void    MainWindow::restoreShow()
+{
+    // Get file name to restore the show list
+    // default dir is where the shows are
+
+    QDir d = QFileInfo(ui->le_ShowPath->text()).absoluteDir();
+    QString absolute=d.absolutePath();
+
+    QString sShowFile = QFileDialog::getOpenFileName(this,
+                    tr("Open Show File"),
+                    absolute,
+                    tr("ShowFile (*.show);"));
+    if ( 0 == sShowFile.count() )
+    {
+        return;
+    }
+
+
+    QSettings* pShowFile = new QSettings( sShowFile, QSettings::IniFormat);
+
+    qDebug() <<"MainWindow::restoreShow "<<sShowFile;
+
+
+    pShowFile->beginGroup("Global");
+    QString versionParams = pShowFile->value("version", QString(SETTINGS_VERSION) ).toString();
+    pShowFile->endGroup();
+
+    pShowFile->beginGroup("Show");
+
+    QString versionSites = pShowFile->value("version", QString(SETTINGS_VERSION) ).toString();
+
+    ui->lw_ShowList->clear();
+
+    int nItems = pShowFile->value("show_count", 0 ).toInt();
+
+    qDebug()<<QString("Restoring %1 shows").arg(nItems);
+
+    for ( int i=0; i < nItems; i++ )
+    {
+        QString showpath;
+        //QListWidgetItem* pitem = new QListWidgetItem();
+        QString key = QString("show_%1").arg(i);
+        showpath =  pShowFile->value( key, "" ).toString();
+        //pitem->setText(showpath);
+        //ui->lw_ShowList->addItem(pitem);
+        ui->lw_ShowList->addItem(showpath);
+      }
+
+    pShowFile->endGroup();
+    delete pShowFile;
+    pShowFile = NULL;
+
+    setStatus(tr("Restored %1 shows").arg(nItems));
+    qDebug()<<QString("Restored %1 shows").arg(nItems);
+
+}
+
 
 void MainWindow::on_actionQuit_triggered()
 {
