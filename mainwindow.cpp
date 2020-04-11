@@ -157,7 +157,10 @@ void MainWindow::createDefaults()
 }
 
 //
-// save Scan Interval in minutes and the site list with a count
+// save paths to the impress program, options and the path we
+// were last using for shows. Show lists are saved in their own
+// files, so we don't store those here.
+// No warning on unsaved show lists on exit.
 //
 void    MainWindow::saveDefaults()
 {
@@ -189,6 +192,9 @@ void    MainWindow::saveDefaults()
 
 //
 // restore everything we saved
+// take care of the case that we didn't save a file. First Time we Run
+// so we don't blow away the programmed defaults. After that they are restored
+// from last exit.
 //
 void    MainWindow::restoreDefaults()
 {
@@ -290,6 +296,8 @@ void    MainWindow::saveShow()
     }
 
 
+    // make our own private file, but using the INI format and settings
+    // class to make this easy.
     QSettings* pShowFile = new QSettings( sShowFile, QSettings::IniFormat);
 
     qDebug() <<"MainWindow::saveShow "<<sShowFile;
@@ -319,6 +327,10 @@ void    MainWindow::saveShow()
     qDebug("MainWindow::saveShow - Show saved");
 
 }
+
+//
+// Restore a show list from an INI settings file.
+//
 void    MainWindow::restoreShow()
 {
     // Get file name to restore the show list
@@ -333,14 +345,17 @@ void    MainWindow::restoreShow()
                     tr("ShowFile (*.show);"));
     if ( 0 == sShowFile.count() )
     {
+        // user just cancelled out of the open dialog
         return;
     }
 
-
+    // use the handy settings class
     QSettings* pShowFile = new QSettings( sShowFile, QSettings::IniFormat);
 
     qDebug() <<"MainWindow::restoreShow "<<sShowFile;
 
+
+    // someday we might check the settings format and refuse, but just ignore for now
 
     pShowFile->beginGroup("Global");
     QString versionParams = pShowFile->value("version", QString(SETTINGS_VERSION) ).toString();
@@ -359,11 +374,8 @@ void    MainWindow::restoreShow()
     for ( int i=0; i < nItems; i++ )
     {
         QString showpath;
-        //QListWidgetItem* pitem = new QListWidgetItem();
         QString key = QString("show_%1").arg(i);
         showpath =  pShowFile->value( key, "" ).toString();
-        //pitem->setText(showpath);
-        //ui->lw_ShowList->addItem(pitem);
         ui->lw_ShowList->addItem(showpath);
       }
 
