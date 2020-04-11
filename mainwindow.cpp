@@ -91,6 +91,7 @@
 #include <QWindow>
 #include <QScreen>
 #include <QDir>
+#include <QDebug>
 
 // support mouse click
 #include <mouseclick.h>
