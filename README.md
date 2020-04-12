@@ -9,6 +9,7 @@ Each show in the sequence is set under Slide Settings so that mouse clicks do no
 This complicated process gets around the fact that LibreOffice Impress apparently has no options or scripting features available to accomplish chaining and looping of multiple slide shows together.
 
 The reason for wanting to chain multiple shows is that after 100 or so slides with images the save times and editing for shows becomes cumbersome. This is quite reasonable for at this point the show file size may become 100MB or more.
+
 Features
 
     Launches Impress Slide Shows
