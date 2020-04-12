@@ -52,6 +52,12 @@ private slots:
 
     void on_actionSave_triggered();
 
+    void on_bMoveShowToTop_clicked();
+
+    void on_bMoveShowUp_clicked();
+
+    void on_bMoveShowDown_clicked();
+
 private:
     Ui::MainWindow *ui;
 

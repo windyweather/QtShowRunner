@@ -536,6 +536,97 @@ void MainWindow::on_pb_RemoveAllShows_clicked()
     setStatus(tr("All Shows Removed from the List"));
 }
 
+//
+// Top, Up, Down
+//
+// Reorder the list items with some buttons.
+//
+
+void MainWindow::on_bMoveShowToTop_clicked()
+{
+    QListWidgetItem* item = ui->lw_ShowList->currentItem();
+    if ( item == NULL  )
+    {
+        setStatus(tr("Select a Show first."));
+        return; // no current item apparently  || item == (void) -1
+    }
+    int row = ui->lw_ShowList->currentRow();
+    if ( row <= 0 )
+    {
+        setStatus(tr("Show is already at the top"));
+        return;
+    }
+    QListWidgetItem* newItem = new QListWidgetItem();
+    *newItem = *item; // copy the item so we don't lose it
+    // remove the old item and then insert the new one at row zero so it is first in the list
+    ui->lw_ShowList->takeItem(row);
+    ui->lw_ShowList->insertItem(0, newItem);
+    ui->lw_ShowList->scrollToTop();
+
+    ui->lw_ShowList->setCurrentRow( 0 ); // Update the pair data to top row
+    setStatus(tr("Show moved to top"));
+}
+
+void MainWindow::on_bMoveShowUp_clicked()
+{
+    QListWidgetItem* item = ui->lw_ShowList->currentItem();
+    if ( item == NULL  )
+    {
+        setStatus(tr("Select a show first."));
+        return; // no current item apparently  || item == (void) -1
+    }
+    int row = ui->lw_ShowList->currentRow();
+    if ( row <= 0 )
+    {
+        setStatus(tr("Show is at the top"));
+        return;
+    }
+    QListWidgetItem* newItem = new QListWidgetItem();
+    *newItem = *item; // copy the item so we don't lose it
+    // remove the old item and then insert the new one at row above so it is moved up
+    ui->lw_ShowList->takeItem(row);
+    ui->lw_ShowList->insertItem(row-1, newItem);
+    ui->lw_ShowList->scrollToItem(newItem);
+
+    ui->lw_ShowList->setCurrentRow( row-1 ); // Update the pair data to correct row
+    setStatus(tr("Show moved up"));
+}
+
+void MainWindow::on_bMoveShowDown_clicked()
+{
+    QListWidgetItem* item = ui->lw_ShowList->currentItem();
+    if ( item == NULL  )
+    {
+        setStatus(tr("Select a show first."));
+        return; // no current item apparently
+    }
+    int row = ui->lw_ShowList->currentRow();
+    int rows = ui->lw_ShowList->count();
+#if 0
+    QString msg;
+    msg = tr("Row %1 of %2").arg(row).arg(rows);
+    setStatus(msg);
+    return;
+#endif
+    // row numbers start with zero
+    if ( row == (rows-1) )
+    {
+        setStatus(tr("Show is at the bottom"));
+        return;
+    }
+    QListWidgetItem* newItem = new QListWidgetItem();
+    *newItem = *item; // copy the item so we don't lose it
+    // remove the old item and then insert the new one at row above so it is moved up
+    ui->lw_ShowList->takeItem(row);
+    ui->lw_ShowList->insertItem(row+1, newItem);
+    ui->lw_ShowList->scrollToItem(newItem);
+
+    ui->lw_ShowList->setCurrentRow( row+1 ); // Update the pair data to correct row
+    setStatus(tr("Show moved down"));
+}
+
+
+
 void MainWindow::on_actionAbout_triggered()
 {
     AboutDialog dialog(this);
